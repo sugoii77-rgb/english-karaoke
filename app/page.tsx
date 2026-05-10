@@ -8,159 +8,316 @@ const YOUTUBE_URL = "https://youtu.be/IitIl2C3Iy8?si=NUdIR0jzbDQK0SXk";
 
 // ─── 단어 사전 ───────────────────────────────────────────────────────────────
 const wordMeanings: Record<string, string> = {
-  confidence: "자신감",
-  confident: "자신감 있는",
-  behavior: "행동",
-  behaviors: "행동들",
-  increase: "늘리다, 증가시키다",
-  achieve: "성취하다, 이루다",
-  achieved: "성취했다",
-  courage: "용기",
-  brave: "용감한",
-  momentum: "추진력, 탄력",
-  success: "성공",
-  successful: "성공적인",
-  career: "커리어, 경력",
-  contribute: "기여하다",
-  executive: "임원",
-  athlete: "운동선수",
-  performed: "수행했다, 해냈다",
-  excellent: "훌륭한",
-  excellence: "탁월함",
-  nerves: "긴장",
-  awkward: "어색한",
-  conflict: "갈등",
-  publish: "게시하다",
-  podcast: "팟캐스트",
-  critique: "비평하다",
-  opinions: "의견들",
-  metaphorically: "비유적으로",
-  actually: "실제로",
-  table: "테이블, 회의 자리",
-  celebrate: "축하하다",
-  celebrated: "축하했다",
-  colleague: "동료",
-  threatened: "위협받는",
-  support: "지지하다",
-  promotion: "승진",
+  a: "하나의, 어떤",
+  about: "~에 대하여, 약",
+  above: "위에, 이상",
+  accept: "받아들이다",
   accomplishment: "성취",
   accomplishments: "성취들",
-  constantly: "끊임없이",
-  goals: "목표들",
-  stress: "스트레스",
-  reinforce: "강화하다",
-  prior: "이전의",
-  propel: "앞으로 밀고 나가다",
-  shy: "수줍은",
-  stranger: "낯선 사람",
-  strangers: "낯선 사람들",
-  homesick: "향수병이 난",
-  disappointing: "실망스러운",
-  pursue: "추구하다",
-  dream: "꿈",
-  attitudes: "태도들",
-  research: "연구",
-  associated: "관련된",
-  differently: "다르게",
-  sports: "스포츠",
-  industry: "업계, 산업",
-  female: "여성의",
-  manager: "감독, 관리자",
-  general: "전체의, 총괄의",
-  sideline: "경기장 옆 라인",
-  reporting: "리포팅, 현장 보도",
-  televised: "TV로 방송된",
-  basketball: "농구",
-  familiar: "익숙한",
-  headset: "헤드셋",
-  tactic: "전략, 전술",
-  uncomfortable: "불편한",
-  conversation: "대화",
-  uniform: "유니폼",
-  wrong: "잘못된",
-  color: "색상",
-  title: "제목",
-  upload: "업로드",
-  button: "버튼",
-  edits: "수정",
-  listen: "듣다",
-  world: "세상",
-  seat: "자리",
-  represents: "대표하다",
-  baseball: "야구",
-  room: "방",
-  deal: "거래",
-  ladder: "사다리",
-  forward: "앞으로",
-  accolades: "찬사, 칭찬",
-  promoted: "승진했다",
-  chief: "최고의, 수석의",
-  marketing: "마케팅",
-  officer: "임원",
-  league: "리그",
-  sincere: "진심 어린",
-  congratulatory: "축하의",
-  outreach: "연락, 다가감",
-  bolster: "북돋우다, 강화하다",
+  achieve: "성취하다, 이루다",
+  achieved: "성취했다",
+  accolade: "찬사, 칭찬",
+  accolades: "찬사, 칭찬들",
   activity: "활동",
-  performance: "성과, 수행",
-  proud: "자랑스러운",
-  born: "태어난",
-  current: "현재의",
-  immediately: "즉시",
-  diminished: "줄어든, 약해진",
-  meaningful: "의미 있는",
-  highlight: "하이라이트",
-  brain: "뇌",
-  rewire: "다시 연결하다",
-  worth: "가치 있는",
-  risk: "위험, 리스크",
-  score: "득점하다",
-  runs: "득점, 득점들",
-  times: "배, 곱",
-  specific: "구체적인",
-  decision: "결정",
-  commit: "결심하다",
-  committed: "결심한",
-  pattern: "패턴, 습관",
-  stuck: "막힌, 고착된",
-  version: "버전",
-  potential: "잠재력",
-  natural: "타고난",
-  talent: "재능",
-  attempt: "시도하다",
-  journal: "일기를 쓰다",
-  journaling: "일기 쓰기",
-  reflect: "반성하다, 돌아보다",
-  reflection: "반성, 회고",
-  negative: "부정적인",
-  positive: "긍정적인",
-  discomfort: "불편함",
-  fear: "두려움",
-  overcome: "극복하다",
+  actually: "실제로",
+  add: "더하다, 추가하다",
+  adult: "성인",
+  afraid: "두려워하는",
+  after: "~후에",
+  again: "다시",
+  all: "모든",
+  also: "또한",
+  an: "하나의",
+  and: "그리고",
+  answer: "대답하다, 답",
+  answers: "답들",
   anxious: "불안한",
   anxiety: "불안",
-  volunteer: "자원하다",
-  volunteering: "자원봉사",
-  speak: "말하다",
-  public: "공개적인, 대중",
-  speech: "연설",
-  recognize: "인정하다, 알아보다",
-  recognition: "인정, 인식",
-  reward: "보상",
+  any: "어떤, 아무",
+  are: "~이다, 있다",
+  around: "주변에, 약",
+  ask: "묻다, 부탁하다",
+  asked: "물었다, 부탁했다",
+  associate: "관련시키다",
+  associated: "관련된",
+  at: "~에, ~에서",
+  attempt: "시도하다",
+  attitude: "태도",
+  attitudes: "태도들",
+  away: "떨어져, 멀리",
+  awkward: "어색한",
+
+  baseball: "야구",
+  basketball: "농구",
+  be: "~이다, 되다",
+  because: "왜냐하면",
+  become: "되다",
+  became: "되었다",
+  been: "~되어 왔다",
+  before: "~전에",
+  behavior: "행동",
+  behaviors: "행동들",
+  being: "존재, ~인 상태",
+  believe: "믿다",
+  big: "큰",
+  bolster: "북돋우다, 강화하다",
+  book: "책, 전화번호부",
+  born: "태어난",
+  brave: "용감한",
+  brain: "뇌",
+  brother: "형, 오빠, 남동생",
+  build: "만들다, 쌓다",
+  built: "쌓은, 만들어진",
+  business: "사업, 업무",
+  button: "버튼",
+  by: "~에 의해",
+
+  call: "전화, 전화하다",
+  called: "전화했다, 불렀다",
+  can: "할 수 있다",
+  career: "경력, 커리어",
+  celebrate: "축하하다",
+  celebrated: "축하했다",
+  challenge: "도전",
+  chief: "최고의, 수석의",
+  colleague: "동료",
+  colleagues: "동료들",
+  college: "대학",
+  color: "색상",
+  comfortable: "편안한",
+  commit: "결심하다, 전념하다",
+  committed: "결심한, 전념한",
+  confidence: "자신감",
+  confident: "자신감 있는",
+  conflict: "갈등",
+  congratulatory: "축하의",
+  consistently: "일관되게",
+  constantly: "끊임없이",
+  contribute: "기여하다",
+  conversation: "대화",
+  could: "할 수 있었다, 할 수 있을 것이다",
+  courage: "용기",
+  create: "만들다",
+  cried: "울었다",
+  crying: "울고 있는",
+  critique: "비평하다",
+  current: "현재의",
+
+  deal: "거래, 다루다",
+  decision: "결정",
+  differently: "다르게",
+  diminished: "줄어든, 약해진",
+  disappointing: "실망스러운",
+  discomfort: "불편함",
+  dorm: "기숙사",
+  dream: "꿈",
+
+  early: "이른, 초기의",
+  earn: "얻다, 획득하다",
+  edge: "가장자리",
+  edits: "수정",
+  excellent: "훌륭한",
+  excellence: "탁월함",
+  executive: "임원",
+  executives: "임원들",
+  example: "예시",
+  examples: "예시들",
+
+  family: "가족",
+  familiar: "익숙한",
+  fast: "빠른",
+  fear: "두려움",
+  female: "여성의",
+  first: "첫 번째의",
+  focus: "집중하다",
+  forward: "앞으로",
+  freshman: "신입생",
+  friday: "금요일",
+  from: "~로부터, ~에서",
+
+  general: "전체의, 총괄의",
+  get: "얻다, 되다",
+  go: "가다",
+  goals: "목표들",
+  growth: "성장",
+
   habit: "습관",
+  hand: "손",
+  handed: "건네주었다",
+  have: "가지다",
+  headset: "헤드셋",
+  high: "높은",
+  highlight: "하이라이트",
+  home: "집, 고향",
+  homesick: "향수병이 난",
+  host: "진행하다, 주최하다",
+
+  i: "나",
+  if: "만약",
+  illinois: "일리노이",
+  immediately: "즉시",
+  improve: "향상시키다",
+  improved: "향상되었다",
+  improvement: "향상",
+  in: "~안에, ~에서",
+  increase: "늘리다, 증가시키다",
+  industry: "업계, 산업",
+  interview: "인터뷰하다",
+  interviewed: "인터뷰했다",
+  is: "~이다",
+  it: "그것",
+
+  journal: "일기를 쓰다",
+  journaling: "일기 쓰기",
+  just: "단지, 방금",
+
+  ladder: "사다리",
+  leadership: "리더십",
+  league: "리그",
+  like: "~처럼, 좋아하다",
+  listen: "듣다",
+  looked: "찾아봤다, 바라봤다",
+
+  major: "전공, 주요한",
+  manager: "감독, 관리자",
+  marketing: "마케팅",
+  meaningful: "의미 있는",
+  metaphorically: "비유적으로",
+  mindset: "마음가짐",
+  mom: "엄마",
+  momentum: "추진력, 탄력",
+  more: "더 많은",
+  most: "가장 많은",
+  my: "나의",
+
+  natural: "타고난, 자연스러운",
+  necessary: "필요한",
+  negative: "부정적인",
+  nerves: "긴장",
+  night: "밤",
+  not: "아니다",
+  notes: "메모",
+  number: "번호, 숫자",
+
+  of: "~의",
+  officer: "임원",
+  on: "~위에, ~에",
+  one: "하나, 첫 번째",
+  opinions: "의견들",
+  opportunity: "기회",
+  or: "또는",
+  order: "주문하다",
+  other: "다른",
+  outreach: "연락, 다가감",
+  over: "~이상, 넘어서",
+  overcome: "극복하다",
+  older: "나이가 더 많은",
+
+  partake: "참여하다",
+  party: "파티",
+  partying: "파티에 참여하기, 놀기",
+  pattern: "패턴, 습관",
+  performance: "성과, 수행",
+  performed: "수행했다, 해냈다",
+  phone: "전화",
+  pizza: "피자",
+  place: "놓다, 걸다, 장소",
+  podcast: "팟캐스트",
+  positive: "긍정적인",
+  potential: "잠재력",
   practice: "연습하다",
   practicing: "연습 중인",
-  consistently: "일관되게",
-  growth: "성장",
-  mindset: "마음가짐",
-  challenge: "도전",
-  improve: "향상시키다",
-  improvement: "향상",
-  focus: "집중하다",
-  progress: "진전, 발전",
-  opportunity: "기회",
+  prior: "이전의",
   professional: "전문적인",
+  progress: "진전, 발전",
+  promotion: "승진",
+  promptly: "즉시, 바로",
+  propel: "앞으로 밀고 나가다",
+  proud: "자랑스러운",
+  public: "공개적인, 대중",
+  publish: "게시하다",
+  pursue: "추구하다",
+  push: "밀다, 추진하다",
+
+  recognize: "인정하다, 알아보다",
+  recognition: "인정, 인식",
+  reflect: "반성하다, 돌아보다",
+  reflection: "반성, 회고",
+  reinforce: "강화하다",
+  reporting: "리포팅, 현장 보도",
+  represents: "대표하다",
+  research: "연구",
+  reward: "보상",
+  rewire: "다시 연결하다",
+  risk: "위험, 리스크",
+  room: "방",
+  runs: "득점, 득점들",
+
+  school: "학교",
+  score: "득점하다",
+  seat: "자리",
+  several: "몇몇의",
+  shy: "수줍은",
+  sideline: "경기장 옆 라인",
+  sincere: "진심 어린",
+  skill: "능력, 기술",
+  small: "작은",
+  speak: "말하다",
+  speech: "연설",
+  spent: "보냈다",
+  sport: "스포츠",
+  sports: "스포츠",
+  spot: "자리",
+  started: "시작했다",
+  stranger: "낯선 사람",
+  strangers: "낯선 사람들",
+  stress: "스트레스",
+  stuck: "막힌, 고착된",
+  success: "성공",
+  successful: "성공적인",
+  support: "지지하다",
+
+  table: "테이블, 회의 자리",
+  tactic: "전략, 전술",
+  talent: "재능",
+  talk: "말하다",
+  team: "팀",
+  televised: "TV로 방송된",
+  that: "그것, ~라는 것",
+  the: "그",
+  their: "그들의",
+  these: "이것들",
+  they: "그들",
+  threatened: "위협받는",
+  through: "~을 통해",
+  time: "시간, 때",
+  times: "배, 시간들",
+  title: "제목",
+  to: "~로, ~에게",
+  told: "말했다",
+  too: "너무, 또한",
+  top: "정상, 맨 위",
+  town: "마을",
+
+  uncomfortable: "불편한",
+  uniform: "유니폼",
+  university: "대학교",
+  upload: "업로드",
+
+  version: "버전",
+  volunteer: "자원하다",
+  volunteering: "자원봉사",
+
+  wanted: "원했다",
+  was: "~이었다",
+  way: "방법, 길",
+  weeks: "몇 주",
+  when: "~할 때",
+  where: "어디에, ~하는 곳",
+  women: "여성들",
+  world: "세상",
+  worth: "가치 있는",
+  wrong: "잘못된",
 };
 
 // ─── TOEIC 문제 ───────────────────────────────────────────────────────────────
@@ -247,12 +404,73 @@ const toeicQuestions = [
   },
 ];
 
-const cleanWord = (w: string) => w.replace(/[“”"'.?!,;:()\-]/g, "").trim();
+const cleanWord = (w: string) =>
+  w
+    .replace(/[“”"'.?!,;:()\-\[\]{}]/g, "")
+    .replace(/’/g, "'")
+    .trim();
 
 const formatTime = (s: number) => {
   const m = Math.floor(s / 60);
   const sec = Math.floor(s % 60);
   return `${m}:${sec.toString().padStart(2, "0")}`;
+};
+
+const getMeaning = (word: string) => {
+  const raw = cleanWord(word).toLowerCase();
+  const key = raw.split("'")[0];
+
+  if (!key) return "📖 사전에 없는 단어";
+  if (wordMeanings[key]) return wordMeanings[key];
+
+  const candidates = new Set<string>();
+
+  candidates.add(key);
+
+  if (key.endsWith("ies") && key.length > 3) {
+    candidates.add(`${key.slice(0, -3)}y`);
+  }
+
+  if (key.endsWith("ing") && key.length > 4) {
+    const base = key.slice(0, -3);
+    candidates.add(base);
+    candidates.add(`${base}e`);
+
+    // running -> run, sitting -> sit 같은 중복 자음 보정
+    if (base.length >= 2 && base[base.length - 1] === base[base.length - 2]) {
+      candidates.add(base.slice(0, -1));
+    }
+  }
+
+  if (key.endsWith("ed") && key.length > 3) {
+    const base = key.slice(0, -2);
+    candidates.add(base);
+    candidates.add(`${base}e`);
+
+    // improved -> improve 같은 케이스
+    if (key.endsWith("ied")) {
+      candidates.add(`${key.slice(0, -3)}y`);
+    }
+
+    // stopped -> stop 같은 케이스
+    if (base.length >= 2 && base[base.length - 1] === base[base.length - 2]) {
+      candidates.add(base.slice(0, -1));
+    }
+  }
+
+  if (key.endsWith("es") && key.length > 3) {
+    candidates.add(key.slice(0, -2));
+  }
+
+  if (key.endsWith("s") && key.length > 2) {
+    candidates.add(key.slice(0, -1));
+  }
+
+  for (const candidate of candidates) {
+    if (wordMeanings[candidate]) return wordMeanings[candidate];
+  }
+
+  return "📖 사전에 없는 단어";
 };
 
 export default function Home() {
@@ -335,6 +553,7 @@ export default function Home() {
     if (typeof window === "undefined") return;
 
     window.speechSynthesis.cancel();
+    window.speechSynthesis.resume();
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = lang;
@@ -342,7 +561,9 @@ export default function Home() {
     utterance.pitch = 1;
     utterance.volume = 1;
 
-    window.speechSynthesis.speak(utterance);
+    setTimeout(() => {
+      window.speechSynthesis.speak(utterance);
+    }, 80);
   };
 
   const speakLine = (lineIndex: number, runId: number) => {
@@ -352,6 +573,7 @@ export default function Home() {
     if (!line) return;
 
     window.speechSynthesis.cancel();
+    window.speechSynthesis.resume();
 
     setCurrentTime(line.start);
 
@@ -511,11 +733,23 @@ export default function Home() {
               boxShadow: "0 12px 50px rgba(0,0,0,0.6)",
             }}
           >
-            <div style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "6px" }}>
+            <div
+              style={{
+                fontSize: "12px",
+                color: "#9ca3af",
+                marginBottom: "6px",
+              }}
+            >
               단어
             </div>
 
-            <div style={{ fontSize: "38px", fontWeight: 900, marginBottom: "6px" }}>
+            <div
+              style={{
+                fontSize: "38px",
+                fontWeight: 900,
+                marginBottom: "6px",
+              }}
+            >
               {selectedWord}
             </div>
 
@@ -528,9 +762,9 @@ export default function Home() {
                 minHeight: "28px",
               }}
             >
-              {wordMeanings[selectedWord.toLowerCase()]
-                ? `🇰🇷 ${wordMeanings[selectedWord.toLowerCase()]}`
-                : "📖 사전에 없는 단어"}
+              {getMeaning(selectedWord).startsWith("📖")
+                ? getMeaning(selectedWord)
+                : `🇰🇷 ${getMeaning(selectedWord)}`}
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -541,7 +775,7 @@ export default function Home() {
                 🔊 발음 듣기
               </button>
 
-              {!wordMeanings[selectedWord.toLowerCase()] &&
+              {getMeaning(selectedWord).startsWith("📖") &&
                 !myWords.includes(selectedWord) && (
                   <button
                     onClick={() => addToMyWords(selectedWord)}
@@ -621,7 +855,13 @@ export default function Home() {
 
           {!quizDone ? (
             <>
-              <div style={{ fontSize: "13px", color: "#6b7280", marginBottom: "16px" }}>
+              <div
+                style={{
+                  fontSize: "13px",
+                  color: "#6b7280",
+                  marginBottom: "16px",
+                }}
+              >
                 문제 {quizIdx + 1} / {toeicQuestions.length}
               </div>
 
@@ -658,7 +898,14 @@ export default function Home() {
                 {toeicQuestions[quizIdx].q}
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "12px", flex: 1 }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "12px",
+                  flex: 1,
+                }}
+              >
                 {toeicQuestions[quizIdx].opts.map((opt, index) => (
                   <button
                     key={index}
@@ -701,7 +948,14 @@ export default function Home() {
               </div>
             </>
           ) : (
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "16px" }}>
+            <div
+              style={{
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+                gap: "16px",
+              }}
+            >
               <div
                 style={{
                   textAlign: "center",
@@ -715,7 +969,13 @@ export default function Home() {
                   {quizScore >= 8 ? "🏆" : quizScore >= 6 ? "⭐" : "💪"}
                 </div>
 
-                <div style={{ fontSize: "32px", fontWeight: 900, marginBottom: "4px" }}>
+                <div
+                  style={{
+                    fontSize: "32px",
+                    fontWeight: 900,
+                    marginBottom: "4px",
+                  }}
+                >
                   {quizScore} / {toeicQuestions.length}
                 </div>
 
@@ -741,7 +1001,9 @@ export default function Home() {
                         ? "rgba(34,197,94,0.1)"
                         : "rgba(239,68,68,0.1)",
                       border: `1px solid ${
-                        correct ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)"
+                        correct
+                          ? "rgba(34,197,94,0.3)"
+                          : "rgba(239,68,68,0.3)"
                       }`,
                     }}
                   >
@@ -756,17 +1018,30 @@ export default function Home() {
                       {correct ? "✓ 정답" : "✗ 오답"} — Q{index + 1}
                     </div>
 
-                    <div style={{ fontSize: "13px", color: "#e5e7eb", marginBottom: "4px" }}>
+                    <div
+                      style={{
+                        fontSize: "13px",
+                        color: "#e5e7eb",
+                        marginBottom: "4px",
+                      }}
+                    >
                       {q.q}
                     </div>
 
                     {!correct && (
                       <div style={{ fontSize: "12px", color: "#86efac" }}>
-                        정답: ({String.fromCharCode(65 + q.ans)}) {q.opts[q.ans]}
+                        정답: ({String.fromCharCode(65 + q.ans)}){" "}
+                        {q.opts[q.ans]}
                       </div>
                     )}
 
-                    <div style={{ fontSize: "12px", color: "#9ca3af", marginTop: "4px" }}>
+                    <div
+                      style={{
+                        fontSize: "12px",
+                        color: "#9ca3af",
+                        marginTop: "4px",
+                      }}
+                    >
                       {q.exp}
                     </div>
                   </div>
@@ -850,9 +1125,11 @@ export default function Home() {
                     }}
                   >
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: "17px" }}>{word}</div>
+                      <div style={{ fontWeight: 700, fontSize: "17px" }}>
+                        {word}
+                      </div>
                       <div style={{ fontSize: "13px", color: "#a7f3d0" }}>
-                        {wordMeanings[word.toLowerCase()] || "사전에 없음"}
+                        {getMeaning(word)}
                       </div>
                     </div>
 
