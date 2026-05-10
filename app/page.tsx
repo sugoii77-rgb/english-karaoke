@@ -416,15 +416,15 @@ const formatTime = (s: number) => {
   return `${m}:${sec.toString().padStart(2, "0")}`;
 };
 
-const getMeaning = (word: string) => {
+const getLocalMeaning = (word: string) => {
   const raw = cleanWord(word).toLowerCase();
   const key = raw.split("'")[0];
 
-  if (!key) return "📖 사전에 없는 단어";
+  if (!key) return "";
+
   if (wordMeanings[key]) return wordMeanings[key];
 
   const candidates = new Set<string>();
-
   candidates.add(key);
 
   if (key.endsWith("ies") && key.length > 3) {
@@ -436,7 +436,6 @@ const getMeaning = (word: string) => {
     candidates.add(base);
     candidates.add(`${base}e`);
 
-    // running -> run, sitting -> sit 같은 중복 자음 보정
     if (base.length >= 2 && base[base.length - 1] === base[base.length - 2]) {
       candidates.add(base.slice(0, -1));
     }
@@ -447,12 +446,10 @@ const getMeaning = (word: string) => {
     candidates.add(base);
     candidates.add(`${base}e`);
 
-    // improved -> improve 같은 케이스
     if (key.endsWith("ied")) {
       candidates.add(`${key.slice(0, -3)}y`);
     }
 
-    // stopped -> stop 같은 케이스
     if (base.length >= 2 && base[base.length - 1] === base[base.length - 2]) {
       candidates.add(base.slice(0, -1));
     }
@@ -470,8 +467,67 @@ const getMeaning = (word: string) => {
     if (wordMeanings[candidate]) return wordMeanings[candidate];
   }
 
-  return "📖 사전에 없는 단어";
+  return "";
 };
+
+const getMeaning = (word: string) => {
+  const key = cleanWord(word).toLowerCase();
+  if (!key) return "📖 뜻을 찾을 수 없음";
+
+  const local = getLocalMeaning(key);
+  if (local) return local;
+
+  if (typeof window !== "undefined") {
+    try {
+      const cached = localStorage.getItem(`ek_meaning_${key}`);
+      if (cached) return cached;
+    } catch {}
+  }
+
+  return "🔎 뜻 검색 중...";
+};
+
+const fetchAndCacheMeaning = async (word: string) => {
+  if (typeof window === "undefined") return;
+
+  const key = cleanWord(word).toLowerCase();
+  if (!key) return;
+
+  const local = getLocalMeaning(key);
+  if (local) return;
+
+  try {
+    const cached = localStorage.getItem(`ek_meaning_${key}`);
+    if (cached) return;
+
+    const url =
+      "https://api.mymemory.translated.net/get?q=" +
+      encodeURIComponent(key) +
+      "&langpair=en|ko";
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    const translated =
+      data?.responseData?.translatedText ||
+      data?.matches?.[0]?.translation ||
+      "";
+
+    if (translated && typeof translated === "string") {
+      const cleanTranslated = translated.trim();
+
+      if (
+        cleanTranslated &&
+        cleanTranslated.toLowerCase() !== key.toLowerCase()
+      ) {
+        localStorage.setItem(`ek_meaning_${key}`, cleanTranslated);
+      }
+    }
+  } catch {
+    // 외부 번역 실패 시 조용히 무시
+  }
+};
+
 
 export default function Home() {
   const [currentTime, setCurrentTime] = useState(0);
@@ -641,6 +697,9 @@ export default function Home() {
     if (!clean) return;
 
     setSelectedWord(clean);
+    fetchAndCacheMeaning(clean).then(() => {
+      setSelectedWord((prev) => (prev === clean ? clean : prev));
+    });
     speakText(clean, "en-US");
   };
 
