@@ -1,7 +1,10 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { transcript } from "../data/transcript";
+import type { CSSProperties } from "react";
+import { transcript } from "./transcript";
+
+const YOUTUBE_URL = "https://youtu.be/IitIl2C3Iy8?si=NUdIR0jzbDQK0SXk";
 
 // ─── 단어 사전 ───────────────────────────────────────────────────────────────
 const wordMeanings: Record<string, string> = {
@@ -113,7 +116,7 @@ const wordMeanings: Record<string, string> = {
   worth: "가치 있는",
   risk: "위험, 리스크",
   score: "득점하다",
-  runs: "득점 (야구)",
+  runs: "득점, 득점들",
   times: "배, 곱",
   specific: "구체적인",
   decision: "결정",
@@ -160,8 +163,8 @@ const wordMeanings: Record<string, string> = {
   professional: "전문적인",
 };
 
-// ─── 토익 문제 ────────────────────────────────────────────────────────────────
-const toicQuestions = [
+// ─── TOEIC 문제 ───────────────────────────────────────────────────────────────
+const toeicQuestions = [
   {
     q: "According to Emily Jaenson, confidence is _____ built.",
     opts: ["naturally", "behaviorally", "accidentally", "randomly"],
@@ -244,8 +247,7 @@ const toicQuestions = [
   },
 ];
 
-// ─── 헬퍼 ─────────────────────────────────────────────────────────────────────
-const cleanWord = (w: string) => w.replace(/["""'.?!,;:()\-]/g, "").trim();
+const cleanWord = (w: string) => w.replace(/[“”"'.?!,;:()\-]/g, "").trim();
 
 const formatTime = (s: number) => {
   const m = Math.floor(s / 60);
@@ -253,59 +255,49 @@ const formatTime = (s: number) => {
   return `${m}:${sec.toString().padStart(2, "0")}`;
 };
 
-// ─── COMPONENT ───────────────────────────────────────────────────────────────
 export default function Home() {
   const [currentTime, setCurrentTime] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
-  const [showTranscript, setShowTranscript] = useState(false);
   const [myWords, setMyWords] = useState<string[]>([]);
   const [showMyWords, setShowMyWords] = useState(false);
   const [quizActive, setQuizActive] = useState(false);
   const [quizIdx, setQuizIdx] = useState(0);
   const [quizAnswers, setQuizAnswers] = useState<number[]>([]);
   const [quizDone, setQuizDone] = useState(false);
-  const [lesssonDone, setLessonDone] = useState(false);
+  const [lessonDone, setLessonDone] = useState(false);
 
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const activeLineRef = useRef<HTMLDivElement | null>(null);
+  const speechRunIdRef = useRef(0);
 
-  const duration = useMemo(() => Math.max(...transcript.map((l) => l.end), 603), []);
+  const duration = useMemo(
+    () => Math.max(...transcript.map((line) => line.end), 603),
+    []
+  );
 
   const currentIndex = useMemo(() => {
-    const idx = transcript.findIndex((l) => currentTime >= l.start && currentTime < l.end);
+    const idx = transcript.findIndex(
+      (line) => currentTime >= line.start && currentTime < line.end
+    );
+
     if (idx >= 0) return idx;
-    let ni = 0;
+
+    let nearest = 0;
     for (let i = 0; i < transcript.length; i++) {
-      if (transcript[i].start <= currentTime) ni = i;
+      if (transcript[i].start <= currentTime) nearest = i;
     }
-    return ni;
+    return nearest;
   }, [currentTime]);
 
   const currentLine = transcript[currentIndex];
 
-  // 재생 타이머
   useEffect(() => {
-    if (!isPlaying) { if (intervalRef.current) clearInterval(intervalRef.current); return; }
-    intervalRef.current = setInterval(() => {
-      setCurrentTime((prev) => {
-        if (prev >= duration) {
-          setIsPlaying(false);
-          setLessonDone(true);
-          return duration;
-        }
-        return Math.min(prev + 0.25, duration);
-      });
-    }, 250);
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [isPlaying, duration]);
+    activeLineRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, [currentIndex]);
 
-  // 현재 자막 자동 스크롤
-  useEffect(() => {
-    if (showTranscript) activeLineRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [currentIndex, showTranscript]);
-
-  // 로컬 단어장 로드
   useEffect(() => {
     try {
       const saved = localStorage.getItem("ek_mywords");
@@ -315,108 +307,174 @@ export default function Home() {
 
   const saveMyWords = (list: string[]) => {
     setMyWords(list);
-    try { localStorage.setItem("ek_mywords", JSON.stringify(list)); } catch {}
+    try {
+      localStorage.setItem("ek_mywords", JSON.stringify(list));
+    } catch {}
   };
 
   const addToMyWords = (word: string) => {
-    if (!myWords.includes(word)) saveMyWords([...myWords, word]);
-  };
-
-  const removeFromMyWords = (word: string) => saveMyWords(myWords.filter((w) => w !== word));
-
-  // 단어 탭 처리
-  const handleWordTap = (word: string) => {
-    const clean = cleanWord(word);
-    if (!clean) return;
-    setSelectedWord(clean);
-    if (typeof window !== "undefined") {
-      window.speechSynthesis.cancel();
-      const utt = new SpeechSynthesisUtterance(clean);
-      utt.lang = "en-US";
-      utt.rate = 0.8;
-      window.speechSynthesis.speak(utt);
+    if (!myWords.includes(word)) {
+      saveMyWords([...myWords, word]);
     }
   };
 
-  const speak = (text: string, lang: "en-US" | "ko-KR") => {
+  const removeFromMyWords = (word: string) => {
+    saveMyWords(myWords.filter((w) => w !== word));
+  };
+
+  const cancelSpeech = () => {
+    speechRunIdRef.current += 1;
+    setIsSpeaking(false);
+
+    if (typeof window !== "undefined") {
+      window.speechSynthesis.cancel();
+    }
+  };
+
+  const speakText = (text: string, lang: "en-US" | "ko-KR" = "en-US") => {
     if (typeof window === "undefined") return;
+
     window.speechSynthesis.cancel();
-    const utt = new SpeechSynthesisUtterance(text);
-    utt.lang = lang;
-    utt.rate = lang === "en-US" ? 0.82 : 0.95;
-    window.speechSynthesis.speak(utt);
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang;
+    utterance.rate = lang === "en-US" ? 0.82 : 0.95;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+
+    window.speechSynthesis.speak(utterance);
   };
 
-  // 단어별 타이밍 계산
-  const renderWords = (text: string, lineStart: number, lineEnd: number) => {
-    const tokens = text.split(/(\s+)/);
-    const words = tokens.filter((t) => t.trim() !== "");
-    const totalChars = words.reduce((s, w) => s + w.length, 0);
-    const lineDur = Math.max(lineEnd - lineStart, 1);
+  const speakLine = (lineIndex: number, runId: number) => {
+    if (typeof window === "undefined") return;
 
-    let cumChars = 0;
-    const timings = words.map((word) => {
-      const wStart = lineStart + (cumChars / totalChars) * lineDur;
-      cumChars += word.length;
-      const wEnd = lineStart + (cumChars / totalChars) * lineDur;
-      return { word, wStart, wEnd };
-    });
+    const line = transcript[lineIndex];
+    if (!line) return;
 
-    return timings.map(({ word, wStart, wEnd }, i) => {
-      const isCurrent = currentTime >= wStart && currentTime < wEnd;
-      const isPast = currentTime >= wEnd;
-      return (
-        <span key={i}>
-          <button
-            onPointerDown={() => handleWordTap(word)}
-            style={{
-              display: "inline",
-              border: "none",
-              background: isCurrent ? "rgba(250,204,21,0.22)" : "transparent",
-              borderRadius: "5px",
-              padding: "0 2px",
-              margin: "0 1px",
-              cursor: "pointer",
-              font: "inherit",
-              letterSpacing: "inherit",
-              color: isCurrent
-                ? "#facc15"
-                : isPast
-                ? "rgba(250,204,21,0.5)"
-                : "rgba(255,255,255,0.92)",
-              textShadow: isCurrent ? "0 0 20px rgba(250,204,21,0.85)" : "none",
-              fontWeight: isCurrent ? 900 : "inherit",
-              transition: "color 0.1s",
-              lineHeight: "inherit",
-            }}
-          >
-            {word}
-          </button>
-          {i < timings.length - 1 ? " " : ""}
-        </span>
-      );
-    });
+    window.speechSynthesis.cancel();
+
+    setCurrentTime(line.start);
+
+    const utterance = new SpeechSynthesisUtterance(line.text);
+    utterance.lang = "en-US";
+    utterance.rate = 0.82;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+
+    utterance.onend = () => {
+      if (runId !== speechRunIdRef.current) return;
+
+      setCurrentTime(line.end);
+
+      const nextIndex = lineIndex + 1;
+
+      if (nextIndex < transcript.length) {
+        setTimeout(() => {
+          if (runId !== speechRunIdRef.current) return;
+          speakLine(nextIndex, runId);
+        }, 250);
+      } else {
+        setIsSpeaking(false);
+        setLessonDone(true);
+        setCurrentTime(duration);
+      }
+    };
+
+    utterance.onerror = () => {
+      if (runId !== speechRunIdRef.current) return;
+      setIsSpeaking(false);
+    };
+
+    window.speechSynthesis.speak(utterance);
   };
 
-  // 토익 문제 처리
+  const toggleMainPlay = () => {
+    if (isSpeaking) {
+      cancelSpeech();
+      return;
+    }
+
+    if (!currentLine) return;
+
+    const runId = speechRunIdRef.current + 1;
+    speechRunIdRef.current = runId;
+
+    setIsSpeaking(true);
+    speakLine(currentIndex, runId);
+  };
+
+  const handleSeek = (nextTime: number) => {
+    cancelSpeech();
+    const safe = Math.max(0, Math.min(duration, nextTime));
+    setCurrentTime(safe);
+  };
+
+  const resetToStart = () => {
+    cancelSpeech();
+    setCurrentTime(0);
+  };
+
+  const handleWordTap = (word: string) => {
+    const clean = cleanWord(word);
+    if (!clean) return;
+
+    setSelectedWord(clean);
+    speakText(clean, "en-US");
+  };
+
   const handleQuizAnswer = (optIdx: number) => {
     const next = [...quizAnswers, optIdx];
     setQuizAnswers(next);
-    if (quizIdx + 1 >= toicQuestions.length) {
+
+    if (quizIdx + 1 >= toeicQuestions.length) {
       setQuizDone(true);
     } else {
       setQuizIdx(quizIdx + 1);
     }
   };
 
-  const quizScore = quizAnswers.filter((a, i) => a === toicQuestions[i].ans).length;
+  const quizScore = quizAnswers.filter(
+    (answer, index) => answer === toeicQuestions[index].ans
+  ).length;
 
-  // ─── 렌더 ─────────────────────────────────────────────────────────────────
+  const renderWords = (text: string) => {
+    const tokens = text.match(/\s+|\S+/g) ?? [];
+
+    return tokens.map((token, index) => {
+      if (/^\s+$/.test(token)) return <span key={index}>{token}</span>;
+
+      return (
+        <button
+          key={index}
+          onPointerDown={() => handleWordTap(token)}
+          style={{
+            display: "inline",
+            border: "none",
+            background: "transparent",
+            borderRadius: "6px",
+            padding: "0 2px",
+            margin: "0 1px",
+            cursor: "pointer",
+            font: "inherit",
+            letterSpacing: "inherit",
+            color: "rgba(255,255,255,0.96)",
+            textShadow: "none",
+            fontWeight: "inherit",
+            lineHeight: "inherit",
+          }}
+        >
+          {token}
+        </button>
+      );
+    });
+  };
+
   return (
     <main
       style={{
         minHeight: "100dvh",
-        background: "linear-gradient(160deg,#040a14 0%,#0d1e35 55%,#061410 100%)",
+        background:
+          "linear-gradient(160deg,#040a14 0%,#0d1e35 55%,#061410 100%)",
         color: "white",
         fontFamily: "system-ui,-apple-system,sans-serif",
         display: "flex",
@@ -427,7 +485,6 @@ export default function Home() {
         overflowX: "hidden",
       }}
     >
-      {/* ── 단어 팝업 ── */}
       {selectedWord && (
         <div
           onClick={() => setSelectedWord(null)}
@@ -443,7 +500,7 @@ export default function Home() {
           }}
         >
           <div
-            onClick={(e) => e.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
             style={{
               background: "#1a2535",
               border: "1.5px solid rgba(250,204,21,0.45)",
@@ -454,10 +511,14 @@ export default function Home() {
               boxShadow: "0 12px 50px rgba(0,0,0,0.6)",
             }}
           >
-            <div style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "6px" }}>단어</div>
+            <div style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "6px" }}>
+              단어
+            </div>
+
             <div style={{ fontSize: "38px", fontWeight: 900, marginBottom: "6px" }}>
               {selectedWord}
             </div>
+
             <div
               style={{
                 fontSize: "20px",
@@ -474,20 +535,21 @@ export default function Home() {
 
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               <button
-                onClick={() => speak(selectedWord, "en-US")}
+                onClick={() => speakText(selectedWord, "en-US")}
                 style={popBtn("#facc15", "#111")}
               >
                 🔊 발음 듣기
               </button>
 
-              {!wordMeanings[selectedWord.toLowerCase()] && !myWords.includes(selectedWord) && (
-                <button
-                  onClick={() => { addToMyWords(selectedWord); }}
-                  style={popBtn("rgba(99,102,241,0.85)", "white")}
-                >
-                  📝 내 단어장에 추가
-                </button>
-              )}
+              {!wordMeanings[selectedWord.toLowerCase()] &&
+                !myWords.includes(selectedWord) && (
+                  <button
+                    onClick={() => addToMyWords(selectedWord)}
+                    style={popBtn("rgba(99,102,241,0.85)", "white")}
+                  >
+                    📝 내 단어장에 추가
+                  </button>
+                )}
 
               {myWords.includes(selectedWord) && (
                 <div
@@ -504,7 +566,10 @@ export default function Home() {
                 </div>
               )}
 
-              <button onClick={() => setSelectedWord(null)} style={popBtn("rgba(255,255,255,0.12)", "white")}>
+              <button
+                onClick={() => setSelectedWord(null)}
+                style={popBtn("rgba(255,255,255,0.12)", "white")}
+              >
                 닫기
               </button>
             </div>
@@ -512,7 +577,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* ── 토익 퀴즈 ── */}
       {quizActive && (
         <div
           style={{
@@ -526,11 +590,30 @@ export default function Home() {
             flexDirection: "column",
           }}
         >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "20px",
+            }}
+          >
             <h2 style={{ margin: 0, fontSize: "20px" }}>📝 TOEIC 연습</h2>
+
             <button
-              onClick={() => { setQuizActive(false); setQuizIdx(0); setQuizAnswers([]); setQuizDone(false); }}
-              style={{ background: "none", border: "none", color: "#9ca3af", fontSize: "24px", cursor: "pointer" }}
+              onClick={() => {
+                setQuizActive(false);
+                setQuizIdx(0);
+                setQuizAnswers([]);
+                setQuizDone(false);
+              }}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#9ca3af",
+                fontSize: "24px",
+                cursor: "pointer",
+              }}
             >
               ✕
             </button>
@@ -539,14 +622,21 @@ export default function Home() {
           {!quizDone ? (
             <>
               <div style={{ fontSize: "13px", color: "#6b7280", marginBottom: "16px" }}>
-                문제 {quizIdx + 1} / {toicQuestions.length}
+                문제 {quizIdx + 1} / {toeicQuestions.length}
               </div>
-              {/* 진행 바 */}
-              <div style={{ height: "4px", background: "rgba(255,255,255,0.1)", borderRadius: "2px", marginBottom: "24px" }}>
+
+              <div
+                style={{
+                  height: "4px",
+                  background: "rgba(255,255,255,0.1)",
+                  borderRadius: "2px",
+                  marginBottom: "24px",
+                }}
+              >
                 <div
                   style={{
                     height: "100%",
-                    width: `${((quizIdx) / toicQuestions.length) * 100}%`,
+                    width: `${(quizIdx / toeicQuestions.length) * 100}%`,
                     background: "#facc15",
                     borderRadius: "2px",
                     transition: "width 0.3s",
@@ -565,14 +655,14 @@ export default function Home() {
                   borderRadius: "16px",
                 }}
               >
-                {toicQuestions[quizIdx].q}
+                {toeicQuestions[quizIdx].q}
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "12px", flex: 1 }}>
-                {toicQuestions[quizIdx].opts.map((opt, i) => (
+                {toeicQuestions[quizIdx].opts.map((opt, index) => (
                   <button
-                    key={i}
-                    onClick={() => handleQuizAnswer(i)}
+                    key={index}
+                    onClick={() => handleQuizAnswer(index)}
                     style={{
                       padding: "16px 18px",
                       borderRadius: "14px",
@@ -603,7 +693,7 @@ export default function Home() {
                         fontSize: "13px",
                       }}
                     >
-                      {String.fromCharCode(65 + i)}
+                      {String.fromCharCode(65 + index)}
                     </span>
                     {opt}
                   </button>
@@ -611,7 +701,6 @@ export default function Home() {
               </div>
             </>
           ) : (
-            /* 결과 화면 */
             <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "16px" }}>
               <div
                 style={{
@@ -625,43 +714,81 @@ export default function Home() {
                 <div style={{ fontSize: "52px", marginBottom: "8px" }}>
                   {quizScore >= 8 ? "🏆" : quizScore >= 6 ? "⭐" : "💪"}
                 </div>
+
                 <div style={{ fontSize: "32px", fontWeight: 900, marginBottom: "4px" }}>
-                  {quizScore} / {toicQuestions.length}
+                  {quizScore} / {toeicQuestions.length}
                 </div>
+
                 <div style={{ color: "#9ca3af", fontSize: "15px" }}>
-                  {quizScore >= 8 ? "완벽해! 최고야 👏" : quizScore >= 6 ? "잘했어! 조금만 더!" : "다시 도전해보자! 할 수 있어!"}
+                  {quizScore >= 8
+                    ? "완벽해! 최고야 👏"
+                    : quizScore >= 6
+                    ? "잘했어! 조금만 더!"
+                    : "다시 도전해보자! 할 수 있어!"}
                 </div>
               </div>
 
-              {toicQuestions.map((q, i) => {
-                const correct = quizAnswers[i] === q.ans;
+              {toeicQuestions.map((q, index) => {
+                const correct = quizAnswers[index] === q.ans;
+
                 return (
                   <div
-                    key={i}
+                    key={index}
                     style={{
                       padding: "16px",
                       borderRadius: "14px",
-                      background: correct ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
-                      border: `1px solid ${correct ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)"}`,
+                      background: correct
+                        ? "rgba(34,197,94,0.1)"
+                        : "rgba(239,68,68,0.1)",
+                      border: `1px solid ${
+                        correct ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)"
+                      }`,
                     }}
                   >
-                    <div style={{ fontSize: "13px", color: correct ? "#86efac" : "#fca5a5", marginBottom: "4px", fontWeight: 700 }}>
-                      {correct ? "✓ 정답" : "✗ 오답"} — Q{i + 1}
+                    <div
+                      style={{
+                        fontSize: "13px",
+                        color: correct ? "#86efac" : "#fca5a5",
+                        marginBottom: "4px",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {correct ? "✓ 정답" : "✗ 오답"} — Q{index + 1}
                     </div>
-                    <div style={{ fontSize: "13px", color: "#e5e7eb", marginBottom: "4px" }}>{q.q}</div>
+
+                    <div style={{ fontSize: "13px", color: "#e5e7eb", marginBottom: "4px" }}>
+                      {q.q}
+                    </div>
+
                     {!correct && (
                       <div style={{ fontSize: "12px", color: "#86efac" }}>
                         정답: ({String.fromCharCode(65 + q.ans)}) {q.opts[q.ans]}
                       </div>
                     )}
-                    <div style={{ fontSize: "12px", color: "#9ca3af", marginTop: "4px" }}>{q.exp}</div>
+
+                    <div style={{ fontSize: "12px", color: "#9ca3af", marginTop: "4px" }}>
+                      {q.exp}
+                    </div>
                   </div>
                 );
               })}
 
               <button
-                onClick={() => { setQuizIdx(0); setQuizAnswers([]); setQuizDone(false); }}
-                style={{ padding: "16px", borderRadius: "14px", border: "none", background: "#facc15", color: "#111", fontWeight: 800, fontSize: "16px", cursor: "pointer" }}
+                onClick={() => {
+                  setQuizIdx(0);
+                  setQuizAnswers([]);
+                  setQuizDone(false);
+                }}
+                style={{
+                  padding: "16px",
+                  borderRadius: "14px",
+                  border: "none",
+                  background: "#facc15",
+                  color: "#111",
+                  fontWeight: 800,
+                  fontSize: "16px",
+                  cursor: "pointer",
+                }}
               >
                 다시 풀기
               </button>
@@ -670,7 +797,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* ── 내 단어장 ── */}
       {showMyWords && (
         <div
           style={{
@@ -684,7 +810,7 @@ export default function Home() {
           onClick={() => setShowMyWords(false)}
         >
           <div
-            onClick={(e) => e.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
             style={{
               background: "#111c2b",
               borderRadius: "24px 24px 0 0",
@@ -694,16 +820,26 @@ export default function Home() {
               overflowY: "auto",
             }}
           >
-            <h3 style={{ margin: "0 0 16px", fontSize: "18px" }}>📝 내 단어장 ({myWords.length})</h3>
+            <h3 style={{ margin: "0 0 16px", fontSize: "18px" }}>
+              📝 내 단어장 ({myWords.length})
+            </h3>
+
             {myWords.length === 0 ? (
-              <div style={{ color: "#6b7280", fontSize: "14px", textAlign: "center", padding: "24px" }}>
+              <div
+                style={{
+                  color: "#6b7280",
+                  fontSize: "14px",
+                  textAlign: "center",
+                  padding: "24px",
+                }}
+              >
                 모르는 단어를 탭하면 여기 저장돼요!
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                {myWords.map((w) => (
+                {myWords.map((word) => (
                   <div
-                    key={w}
+                    key={word}
                     style={{
                       display: "flex",
                       alignItems: "center",
@@ -714,14 +850,21 @@ export default function Home() {
                     }}
                   >
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: "17px" }}>{w}</div>
+                      <div style={{ fontWeight: 700, fontSize: "17px" }}>{word}</div>
                       <div style={{ fontSize: "13px", color: "#a7f3d0" }}>
-                        {wordMeanings[w.toLowerCase()] || "사전에 없음 (직접 검색해봐!)"}
+                        {wordMeanings[word.toLowerCase()] || "사전에 없음"}
                       </div>
                     </div>
+
                     <button
-                      onClick={() => removeFromMyWords(w)}
-                      style={{ background: "none", border: "none", color: "#6b7280", fontSize: "20px", cursor: "pointer" }}
+                      onClick={() => removeFromMyWords(word)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#6b7280",
+                        fontSize: "20px",
+                        cursor: "pointer",
+                      }}
                     >
                       ✕
                     </button>
@@ -733,22 +876,39 @@ export default function Home() {
         </div>
       )}
 
-      {/* ── 헤더 ── */}
       <header style={{ padding: "16px 18px 8px", flexShrink: 0 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+          }}
+        >
           <div>
-            <h1 style={{ margin: 0, fontSize: "18px", fontWeight: 900, letterSpacing: "0.04em" }}>
+            <h1
+              style={{
+                margin: 0,
+                fontSize: "18px",
+                fontWeight: 900,
+                letterSpacing: "0.04em",
+              }}
+            >
               🎵 English Karaoke
             </h1>
+
             <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#6b7280" }}>
               Six behaviors to increase confidence · Emily Jaenson
             </p>
           </div>
+
           <div style={{ display: "flex", gap: "8px" }}>
             <button
               onClick={() => setShowMyWords(true)}
               style={{
-                background: myWords.length > 0 ? "rgba(99,102,241,0.25)" : "rgba(255,255,255,0.08)",
+                background:
+                  myWords.length > 0
+                    ? "rgba(99,102,241,0.25)"
+                    : "rgba(255,255,255,0.08)",
                 border: "none",
                 borderRadius: "10px",
                 color: myWords.length > 0 ? "#a5b4fc" : "#9ca3af",
@@ -760,8 +920,9 @@ export default function Home() {
             >
               📝 {myWords.length}
             </button>
+
             <a
-              href="https://youtu.be/0Tk82hEHNnY"
+              href={YOUTUBE_URL}
               target="_blank"
               rel="noreferrer"
               style={{
@@ -780,7 +941,6 @@ export default function Home() {
         </div>
       </header>
 
-      {/* ── 메인 디스플레이 ── */}
       <div
         style={{
           flex: 1,
@@ -791,7 +951,14 @@ export default function Home() {
           minHeight: "260px",
         }}
       >
-        <div style={{ fontSize: "12px", color: "#60a5fa", fontWeight: 700, marginBottom: "14px" }}>
+        <div
+          style={{
+            fontSize: "12px",
+            color: "#60a5fa",
+            fontWeight: 700,
+            marginBottom: "14px",
+          }}
+        >
           {formatTime(currentTime)} / {formatTime(duration)}
         </div>
 
@@ -805,9 +972,13 @@ export default function Home() {
             minHeight: "80px",
           }}
         >
-          {currentLine
-            ? renderWords(currentLine.text, currentLine.start, currentLine.end)
-            : <span style={{ color: "#4b5563" }}>▶ 재생 버튼을 눌러 시작하세요</span>}
+          {currentLine ? (
+            renderWords(currentLine.text)
+          ) : (
+            <span style={{ color: "#4b5563" }}>
+              ▶ 재생 버튼을 눌러 시작하세요
+            </span>
+          )}
         </div>
 
         <div
@@ -823,83 +994,88 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── 컨트롤 ── */}
       <div style={{ padding: "0 18px 16px", flexShrink: 0 }}>
-        {/* 프로그레스 바 */}
         <input
           type="range"
           min={0}
           max={duration}
           step={0.25}
           value={currentTime}
-          onChange={(e) => setCurrentTime(Number(e.target.value))}
-          style={{ width: "100%", accentColor: "#facc15", marginBottom: "16px", cursor: "pointer" }}
+          onChange={(event) => handleSeek(Number(event.target.value))}
+          style={{
+            width: "100%",
+            accentColor: "#facc15",
+            marginBottom: "16px",
+            cursor: "pointer",
+          }}
         />
 
-        {/* 메인 버튼 행 */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "14px", marginBottom: "14px" }}>
-          <button
-            onClick={() => setCurrentTime((p) => Math.max(0, p - 10))}
-            style={navBtn}
-          >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "14px",
+            marginBottom: "14px",
+          }}
+        >
+          <button onClick={() => handleSeek(currentTime - 10)} style={navBtn}>
             ◀◀{"\n"}10초
           </button>
 
           <button
-            onClick={() => setIsPlaying((p) => !p)}
+            onClick={toggleMainPlay}
             style={{
               width: "72px",
               height: "72px",
               borderRadius: "50%",
               border: "none",
-              background: isPlaying ? "#ef4444" : "#22c55e",
+              background: isSpeaking ? "#ef4444" : "#22c55e",
               color: "white",
               fontSize: "28px",
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              boxShadow: isPlaying ? "0 0 24px rgba(239,68,68,0.55)" : "0 0 24px rgba(34,197,94,0.55)",
+              boxShadow: isSpeaking
+                ? "0 0 24px rgba(239,68,68,0.55)"
+                : "0 0 24px rgba(34,197,94,0.55)",
               flexShrink: 0,
             }}
           >
-            {isPlaying ? "⏸" : "▶"}
+            {isSpeaking ? "⏹" : "▶"}
           </button>
 
-          <button
-            onClick={() => setCurrentTime((p) => Math.min(duration, p + 10))}
-            style={navBtn}
-          >
+          <button onClick={() => handleSeek(currentTime + 10)} style={navBtn}>
             10초{"\n"}▶▶
           </button>
         </div>
 
-        {/* 보조 버튼 행 */}
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-          <button
-            onClick={() => { setCurrentTime(0); setIsPlaying(false); }}
-            style={smBtn}
-          >
+          <button onClick={resetToStart} style={smBtn}>
             ↺ 처음
           </button>
-          <button onClick={() => currentLine && speak(currentLine.text, "en-US")} style={smBtn}>
-            🔊 영어
-          </button>
-          <button onClick={() => currentLine && speak(currentLine.ko, "ko-KR")} style={smBtn}>
-            🔊 한국어
-          </button>
+
           <button
-            onClick={() => setShowTranscript((p) => !p)}
-            style={{ ...smBtn, background: showTranscript ? "rgba(250,204,21,0.18)" : "rgba(255,255,255,0.1)" }}
+            onClick={() => currentLine && speakText(currentLine.text, "en-US")}
+            style={smBtn}
           >
-            📜 자막 {showTranscript ? "▲" : "▼"}
+            🔊 현재 문장
           </button>
+
+          <a href={YOUTUBE_URL} target="_blank" rel="noreferrer" style={linkBtn}>
+            ▶ YouTube
+          </a>
         </div>
 
-        {/* 수업 완료 후 토익 버튼 */}
-        {(lesssonDone || currentTime > duration * 0.8) && (
+        {(lessonDone || currentTime > duration * 0.8) && (
           <button
-            onClick={() => { setQuizActive(true); setQuizIdx(0); setQuizAnswers([]); setQuizDone(false); }}
+            onClick={() => {
+              setQuizActive(true);
+              setQuizIdx(0);
+              setQuizAnswers([]);
+              setQuizDone(false);
+            }}
             style={{
               marginTop: "12px",
               width: "100%",
@@ -914,58 +1090,71 @@ export default function Home() {
               boxShadow: "0 4px 20px rgba(99,102,241,0.4)",
             }}
           >
-            📝 TOEIC 문제 풀기 ({toicQuestions.length}문제)
+            📝 TOEIC 문제 풀기 ({toeicQuestions.length}문제)
           </button>
         )}
       </div>
 
-      {/* ── 자막 패널 ── */}
-      {showTranscript && (
-        <div
-          style={{
-            borderTop: "1px solid rgba(255,255,255,0.1)",
-            maxHeight: "45vh",
-            overflowY: "auto",
-            background: "rgba(0,0,0,0.3)",
-            padding: "10px 14px",
-          }}
-        >
-          {transcript.map((line, i) => {
-            const active = i === currentIndex;
-            return (
+      <div
+        style={{
+          borderTop: "1px solid rgba(255,255,255,0.1)",
+          maxHeight: "45vh",
+          overflowY: "auto",
+          background: "rgba(0,0,0,0.3)",
+          padding: "10px 14px",
+        }}
+      >
+        {transcript.map((line, index) => {
+          const active = index === currentIndex;
+
+          return (
+            <div
+              key={`${line.start}-${index}`}
+              ref={active ? activeLineRef : null}
+              onClick={() => handleSeek(line.start)}
+              style={{
+                padding: "10px 12px",
+                borderRadius: "12px",
+                marginBottom: "5px",
+                cursor: "pointer",
+                background: active ? "rgba(250,204,21,0.15)" : "transparent",
+                border: `1px solid ${
+                  active ? "rgba(250,204,21,0.35)" : "transparent"
+                }`,
+              }}
+            >
               <div
-                key={i}
-                ref={active ? activeLineRef : null}
-                onClick={() => setCurrentTime(line.start)}
                 style={{
-                  padding: "10px 12px",
-                  borderRadius: "12px",
-                  marginBottom: "5px",
-                  cursor: "pointer",
-                  background: active ? "rgba(250,204,21,0.15)" : "transparent",
-                  border: `1px solid ${active ? "rgba(250,204,21,0.35)" : "transparent"}`,
+                  fontSize: "10px",
+                  color: active ? "#fde68a" : "#6b7280",
+                  marginBottom: "2px",
                 }}
               >
-                <div style={{ fontSize: "10px", color: active ? "#fde68a" : "#6b7280", marginBottom: "2px" }}>
-                  {formatTime(line.start)}
-                </div>
-                <div style={{ fontSize: "14px", color: active ? "white" : "#d1d5db", fontWeight: active ? 700 : 400 }}>
-                  {line.text}
-                </div>
-                <div style={{ fontSize: "12px", color: "#6ee7b7", marginTop: "2px" }}>
-                  {line.ko}
-                </div>
+                {formatTime(line.start)}
               </div>
-            );
-          })}
-        </div>
-      )}
+
+              <div
+                style={{
+                  fontSize: "14px",
+                  color: active ? "white" : "#d1d5db",
+                  fontWeight: active ? 700 : 400,
+                }}
+              >
+                {line.text}
+              </div>
+
+              <div style={{ fontSize: "12px", color: "#6ee7b7", marginTop: "2px" }}>
+                {line.ko}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </main>
   );
 }
 
-// ─── 버튼 스타일 ──────────────────────────────────────────────────────────────
-const navBtn: React.CSSProperties = {
+const navBtn: CSSProperties = {
   padding: "12px 14px",
   borderRadius: "14px",
   border: "none",
@@ -980,7 +1169,7 @@ const navBtn: React.CSSProperties = {
   minWidth: "64px",
 };
 
-const smBtn: React.CSSProperties = {
+const smBtn: CSSProperties = {
   flex: "1 1 auto",
   padding: "10px 8px",
   borderRadius: "10px",
@@ -993,7 +1182,21 @@ const smBtn: React.CSSProperties = {
   textAlign: "center",
 };
 
-function popBtn(bg: string, color: string): React.CSSProperties {
+const linkBtn: CSSProperties = {
+  flex: "1 1 auto",
+  padding: "10px 8px",
+  borderRadius: "10px",
+  border: "none",
+  background: "rgba(255,255,255,0.1)",
+  color: "white",
+  fontWeight: 600,
+  fontSize: "13px",
+  cursor: "pointer",
+  textAlign: "center",
+  textDecoration: "none",
+};
+
+function popBtn(bg: string, color: string): CSSProperties {
   return {
     width: "100%",
     padding: "14px",
